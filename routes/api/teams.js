@@ -264,16 +264,75 @@ router.get('/stats/:year', (req, res) => {
                 }
                 return teamArray;
             })
-
+            await browser.close();
             res.json(teams);
         } catch (err) {
             console.log(err.message);
             res.send(err.message);
         }
     })();
+});
 
+// @Route   GET api/teams/stats/:year
+// @desc    Get stats from different seasons
+// @param   year - must be greater than 2016 and equal to current year
+// @access  Public
+router.get('/standings/playoffs/champions', (req, res) => {
+    const standingsUrl = `${nbaBaseUrl}playoffs`;
+
+    (async () => {
+        const browser = await puppeteer.launch({
+            headless: true
+        });
+
+        try {
+            const page = await browser.newPage();
+            await page.goto(standingsUrl, {
+                waitUntil: 'domcontentloaded'
+            })
+            
+            //wait for the teams to show before proceeding
+            await page.waitForSelector('#champions_index', {
+                visible: true
+            });
+
+            var teams = await page.evaluate(() => {
+                let years = Array.from(document.querySelectorAll('#champions_index tr th[data-stat=year_id] a'));
+                let league = Array.from(document.querySelectorAll('#champions_index tr td[data-stat=lg_id] a'));
+
+                let champion = Array.from(document.querySelectorAll('#champions_index tr td[data-stat=champion] a'));
+                let runnerup = Array.from(document.querySelectorAll('#champions_index tr td[data-stat=runnerup] a'));
+                let finalsMVP = Array.from(document.querySelectorAll('#champions_index tr td[data-stat=mvp_finals]'));
+
+
+                console.log(finalsMVP[2]);
+                let teamArray = [];
+                var counter = -1;
+                for(var i = 0; i < years.length; i++){
+                    counter  ++;
+                    if(league[i].innerText.trim() === 'NBA'){
+                        teamArray[counter] ={
+                            year: years[i].innerText.trim(),
+                                    league: league[i].innerText.trim(),
+                                    champion: champion[i].innerText.trim(),
+                                    runnerup: runnerup[i].innerText.trim(),
+                                    finalsMvp: finalsMVP[i].innerText.trim()
+                        }
+                        
+                    }else{
+                        counter --;
+                    }
+                }
+                return teamArray;
+            })
+            await browser.close();
+            res.json(teams);
+        } catch (err) {
+            console.log(err.message);
+            res.send(err.message);
+        }
+    })();
 })
-
 
 
 

@@ -12,6 +12,7 @@ app.get('/', (req, res) => res.send('api running'));
 
 // http://url:5000/api/...
 app.use('/api/teams', require('./routes/api/teams'));
+app.use('/api/players', require('./routes/api/players'));
 
 
 const PORT = process.env.PORT || 5000;
